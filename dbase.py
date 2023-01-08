@@ -58,6 +58,14 @@ class Dbass:
         res = cursorObj.fetchall()
         cursorObj.close()
         return res
+    
+    def get_limit_contacts(self,offset,count):
+        cursorObj = self.con.cursor()
+        sql = """SELECT * FROM contact_table ORDER BY name ASC LIMIT ?,?"""
+        cursorObj.execute(sql,(offset,count))
+        data = cursorObj.fetchall()
+        cursorObj.close()
+        return data
 
 
     def disconnect(self):

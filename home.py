@@ -7,6 +7,8 @@ from dbase import Dbass
 
 class Window:
     def __init__(self):
+        self.page = 0 #1st page
+        self.show_total = 10
         self.conn = Dbass()
         self.addwin = None
         self.root = tk.Tk()
@@ -20,7 +22,7 @@ class Window:
 
 
         self.design()
-
+        self.fill_contacts()
 
         self.root.mainloop()
 
@@ -34,6 +36,42 @@ class Window:
         srchBox.pack(side=tk.TOP)
         addBtn = tk.Button(self.root,text="Add",command=self.add_window)
         addBtn.pack(side=tk.TOP)
+
+        self.btn_frame = tk.Frame(self.root,width=380,height=50)
+        self.btn_frame.pack(side=tk.TOP)
+        tk.Button(self.btn_frame,text="Prev",command=self.prev_contacts).pack(side=tk.LEFT)
+        tk.Button(self.btn_frame,text="Next",command=self.next_contacts).pack(side=tk.RIGHT)
+
+        self.contact_frame = tk.Frame(self.root,highlightbackground="black",highlightthickness=2,width=380,height=500)
+        self.contact_frame.pack(side=tk.BOTTOM)
+    
+    def fill_contacts(self):
+        contacts = self.conn.get_limit_contacts(self.page * self.show_total,self.show_total)
+        y=0
+        print(contacts)
+        for contact in contacts:
+            btn = tk.Button(self.contact_frame,text=contact[0])
+            btn.place(height=50,width=376,y=y)
+            y += 50
+        rem = self.show_total - len(contacts)
+        
+        for i in range(rem):
+            btn = tk.Button(self.contact_frame,state="disabled")
+            
+            btn.place(height=50,width=376,y=y)
+            y += 50
+    
+    def prev_contacts(self):
+        self.page -= 1
+        if self.page < 0:
+            self.page = 0
+            return
+        self.fill_contacts()
+
+    def next_contacts(self):
+        self.page += 1
+        self.fill_contacts()
+        
 
     def add_window(self):
         self.addwin = tk.Tk()
@@ -65,6 +103,9 @@ class Window:
             messagebox.showerror("NOOO","Contact already exists!!!",parent=self.addwin)
         else:
             self.addwin.destroy()
+    
+    def update_contact(self):
+        pass
     
 
 def main():
