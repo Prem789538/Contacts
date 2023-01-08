@@ -7,12 +7,15 @@ from dbase import Dbass
 
 class Window:
     def __init__(self):
+        self.row = 2
         self.page = 0 #1st page
         self.show_total = 10
         self.conn = Dbass()
         self.addwin = None
         self.root = tk.Tk()
         self.root.geometry('400x600')
+        self.root.minsize(400,600)
+        self.root.maxsize(400,600)
         self.root.title('Address Book')
 
 
@@ -31,13 +34,15 @@ class Window:
         
     
     def design(self):
-        srchBox = tk.Entry(self.root,textvariable=self.srchVar)
-        srchBox.pack(side=tk.TOP)
+        top_frame = tk.Frame(self.root)
+        top_frame.pack(side=tk.TOP)
+        srchBox = tk.Entry(top_frame,textvariable=self.srchVar)
+        srchBox.grid(row=0,column=0)
         srchBox.bind('<Return>',self.search)
-        tk.Button(self.root,text="Search",command=self.search).pack(side=tk.TOP)
+        tk.Button(top_frame,text="Search",command=self.search).grid(row=0,column=1)
 
         
-        addBtn = tk.Button(self.root,text="Add",command=self.add_window)
+        addBtn = tk.Button(self.root,text="New Contact",command=self.add_window)
         addBtn.pack(side=tk.TOP)
 
         self.btn_frame = tk.Frame(self.root,width=380,height=50)
@@ -75,6 +80,7 @@ class Window:
     def show_contact(self,name):
         show_win = tk.Tk()
         show_win.title("Contact")
+        
         res = self.conn.get_contact(name)
         if len(res) != 1:
             print("Some error occured!\n\nExiting...")
@@ -118,7 +124,8 @@ class Window:
 
         tk.Button(show_win,text="Update",command=lambda data=data_dict_updated: self.update_contact(data)).grid(row=len(num_list) + 2 )
 
-
+        tk.Button(show_win,text="Delete",command=lambda name_var=name_var,win=show_win:self.delete_contact(name_var,win)).grid(row=len(num_list) + 2,column=1)
+        
         show_win.mainloop()
 
     def update_contact(self,data_dict_updated):
@@ -135,6 +142,13 @@ class Window:
         data_dict_updated['window'].destroy()
 
 
+    def delete_contact(self,name_var,win):
+        name = name_var.get()
+        res = self.conn.delete_contact(name)
+        if res==-1:
+            messagebox.showerror("ERROR","Can't delete contact",parent=win)
+        win.destroy()
+        self.get_page_contacts()
 
     def prev_contacts(self):
         self.page -= 1
@@ -154,27 +168,34 @@ class Window:
     def add_window(self):
         self.addwin = tk.Tk()
         self.addwin.geometry('300x400')
+        self.addwin.minsize(300,400)
+        self.addwin.maxsize(300,400)
         self.addwin.title('New Contact')
 
         self.nameVar = tk.StringVar(self.addwin)
-        self.numVar = tk.IntVar(self.addwin)
+        tmp = tk.IntVar(self.addwin)
+        tmp.set("")
+        self.numVarListAdd = [tmp]
 
-        self.numVar.set("")
+        
         tk.Label(self.addwin,text="Full Name").grid(row=0,column=0)
         tk.Entry(self.addwin,textvariable=self.nameVar).grid(row=0,column=1)
         tk.Label(self.addwin,text="Ph. Number").grid(row=1,column=0)
-        tk.Entry(self.addwin,textvariable=self.numVar).grid(row=1,column=1)
-        tk.Button(self.addwin,text="Save",command=self.save_new).grid(row=2)
+        tk.Entry(self.addwin,textvariable=self.numVarListAdd[0]).grid(row=1,column=1)
+
+        tk.Button(self.addwin,text="More",command=self.add_phone).grid(row=1,column=2)
+
+        tk.Button(self.addwin,text="Save",command=self.save_new).grid(row=500)
 
         self.addwin.mainloop()
 
     def save_new(self):
         name = self.nameVar.get()
-        num = self.numVar.get()
+        num_list = [var.get() for var in self.numVarListAdd]
         data_dict = {}
         data_dict['name'] = name
         data_dict['category'] = 'default'
-        data_dict['num_list'] = [num]
+        data_dict['num_list'] = num_list
 
         res = self.conn.add_contact(data_dict)
         if res == -1:
@@ -189,7 +210,13 @@ class Window:
 
         self.fill_contacts(res)
         
-    
+    def add_phone(self):
+        x = tk.IntVar(self.addwin)
+        x.set("")
+        tk.Label(self.addwin,text="Ph. Number").grid(row=self.row,column=0)
+        tk.Entry(self.addwin,textvariable=x).grid(row=self.row,column=1)
+        self.row += 1
+        self.numVarListAdd.append(x)
     
     
 

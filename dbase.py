@@ -23,7 +23,7 @@ class Dbass:
     def create_number_table(self):
         cursorObj = self.con.cursor()
         cursorObj.execute("""CREATE TABLE IF NOT EXISTS number_table(cntct_id TEXT , number INTEGER NOT NULL, 
-        FOREIGN KEY(cntct_id) REFERENCES contact_table(name) )""")
+        FOREIGN KEY(cntct_id) REFERENCES contact_table(name) ON DELETE CASCADE)""")
         self.con.commit()
         cursorObj.close()
 
@@ -124,6 +124,12 @@ class Dbass:
         cursorObj.close()
         return data
 
+    def delete_contact(self,name):
+        cursorObj = self.con.cursor()
+        sql = """DELETE FROM contact_table WHERE name = ?"""
+        cursorObj.execute(sql,(name,))
+        cursorObj.close()
+        self.con.commit()
 
     def disconnect(self):
         self.con.close()
