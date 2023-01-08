@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
-from dbase import Dbass
+from dbase import Connector
 
 
 
@@ -10,7 +10,7 @@ class Window:
         self.row = 2
         self.page = 0 #1st page
         self.show_total = 10
-        self.conn = Dbass()
+        self.conn = Connector()
         self.addwin = None
         self.root = tk.Tk()
         self.root.geometry('400x600')

@@ -1,7 +1,7 @@
 import sqlite3
 import datetime
 
-class Dbass:
+class Connector:
     def __init__(self):
         self.con = sqlite3.connect('mydb.db')
         if self.con:
