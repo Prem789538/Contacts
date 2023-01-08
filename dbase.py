@@ -67,7 +67,7 @@ class Dbass:
         if not self.get_contact(name):
             #It means name is changed & hence we need to delete previous contact & create a new one
             print("Can't change name yet!")
-            return -1
+            return
 
         sql = """UPDATE contact_table SET category = ?, last_updated = ? where name = ?"""
         data = (category,timestamp,name)
@@ -100,14 +100,21 @@ class Dbass:
         cursorObj.close()
         return res
     
+    def get_contact_like(self,name):
+        cursorObj = self.con.cursor()
+        sql = f"""SELECT * FROM contact_table where name LIKE '%{name}%'"""
+        cursorObj.execute(sql)
+        res = cursorObj.fetchall()
+        return res
+
     def get_numbers(self,name):
         cursorObj = self.con.cursor()
         sql = """SELECT number FROM number_table WHERE cntct_id = ?"""
         cursorObj.execute(sql,(name,))
-        return cursorObj.fetchall()
-
-
+        data  = cursorObj.fetchall()
         cursorObj.close()
+        return data
+
 
     def get_limit_contacts(self,offset,count):
         cursorObj = self.con.cursor()

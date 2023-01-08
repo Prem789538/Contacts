@@ -17,12 +17,11 @@ class Window:
 
 
         self.srchVar = tk.StringVar(self.root)
-        
-        
+        # self.srchVar.trace_add('write',lambda name,index,mode: self.search)
 
 
         self.design()
-        self.fill_contacts()
+        self.get_page_contacts()
 
         self.root.mainloop()
 
@@ -34,6 +33,10 @@ class Window:
     def design(self):
         srchBox = tk.Entry(self.root,textvariable=self.srchVar)
         srchBox.pack(side=tk.TOP)
+        srchBox.bind('<Return>',self.search)
+        tk.Button(self.root,text="Search",command=self.search).pack(side=tk.TOP)
+
+        
         addBtn = tk.Button(self.root,text="Add",command=self.add_window)
         addBtn.pack(side=tk.TOP)
 
@@ -45,13 +48,18 @@ class Window:
         self.contact_frame = tk.Frame(self.root,highlightbackground="black",highlightthickness=2,width=380,height=500)
         self.contact_frame.pack(side=tk.BOTTOM)
     
-    def fill_contacts(self):
+    def get_page_contacts(self):
         contacts = self.conn.get_limit_contacts(self.page * self.show_total,self.show_total)
-        y=0
-
         if not contacts:
             return -1
-        
+
+        self.fill_contacts(contacts)
+    
+
+
+    #contacts is a list with each contact as a tuple (name,category,timestamp)
+    def fill_contacts(self,contacts):
+        y=0
         for contact in contacts:
             btn = tk.Button(self.contact_frame,text=contact[0],command=lambda name=contact[0]:self.show_contact(name))
             btn.place(height=50,width=376,y=y)
@@ -133,11 +141,11 @@ class Window:
         if self.page < 0:
             self.page = 0
             return
-        self.fill_contacts()
+        self.get_page_contacts()
 
     def next_contacts(self):
         self.page += 1
-        res = self.fill_contacts()
+        res = self.get_page_contacts()
         if res==-1:
             self.page -= 1
 
@@ -173,6 +181,14 @@ class Window:
             messagebox.showerror("NOOO","Contact already exists!!!",parent=self.addwin)
         else:
             self.addwin.destroy()
+    
+    def search(self,key=None):
+        value = self.srchVar.get()
+        res = self.conn.get_contact_like(value)
+        
+
+        self.fill_contacts(res)
+        
     
     
     
