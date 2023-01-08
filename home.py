@@ -202,13 +202,16 @@ class Window:
             messagebox.showerror("NOOO","Contact already exists!!!",parent=self.addwin)
         else:
             self.addwin.destroy()
+        self.get_page_contacts()
     
     def search(self,key=None):
         value = self.srchVar.get()
         res = self.conn.get_contact_like(value)
         
-
-        self.fill_contacts(res)
+        if value == "":
+            self.get_page_contacts()
+        else:
+            self.fill_contacts(res)
         
     def add_phone(self):
         x = tk.IntVar(self.addwin)
