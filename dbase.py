@@ -39,15 +39,56 @@ class Dbass:
         name = data_dict.get('name')
         data = (name,data_dict.get('category','default'),timestamp)
         cursorObj.execute(sql,data)
+        self.con.commit()
+        cursorObj.close()
 
-        
+        self.save_numbers(name,data_dict['num_list'])
+
+    
+    def save_numbers(self,name,num_list):
+        cursorObj = self.con.cursor()
         sql = """INSERT INTO number_table VALUES (?,?) """
         data = []
-        for num in data_dict['num_list']:
+        for num in num_list:
             data.append((name,num))
 
         cursorObj.executemany(sql,data)
         
+        self.con.commit()
+        cursorObj.close()
+    
+    def update_contact(self,data_dict):
+        name = data_dict['name']
+        category = data_dict.get('category','default')
+        timestamp = datetime.datetime.now()
+
+        #checking if contact with name exist
+        cursorObj = self.con.cursor()
+        if not self.get_contact(name):
+            #It means name is changed & hence we need to delete previous contact & create a new one
+            print("Can't change name yet!")
+            return -1
+
+        sql = """UPDATE contact_table SET category = ?, last_updated = ? where name = ?"""
+        data = (category,timestamp,name)
+        cursorObj.execute(sql,data)
+        self.con.commit()
+
+
+        #data_dict['num_list']
+        self.delete_all_numbers(name)
+        self.save_numbers(name,data_dict['num_list'])
+
+        print("Contact updated successfully!")
+        cursorObj.close()
+
+
+    
+    def delete_all_numbers(self,name):
+        cursorObj = self.con.cursor()
+        sql = """DELETE FROM number_table WHERE cntct_id = ?"""
+        cursorObj.execute(sql,(name,))
+
         self.con.commit()
         cursorObj.close()
 
@@ -59,6 +100,15 @@ class Dbass:
         cursorObj.close()
         return res
     
+    def get_numbers(self,name):
+        cursorObj = self.con.cursor()
+        sql = """SELECT number FROM number_table WHERE cntct_id = ?"""
+        cursorObj.execute(sql,(name,))
+        return cursorObj.fetchall()
+
+
+        cursorObj.close()
+
     def get_limit_contacts(self,offset,count):
         cursorObj = self.con.cursor()
         sql = """SELECT * FROM contact_table ORDER BY name ASC LIMIT ?,?"""

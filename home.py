@@ -48,9 +48,12 @@ class Window:
     def fill_contacts(self):
         contacts = self.conn.get_limit_contacts(self.page * self.show_total,self.show_total)
         y=0
-        print(contacts)
+
+        if not contacts:
+            return -1
+        
         for contact in contacts:
-            btn = tk.Button(self.contact_frame,text=contact[0])
+            btn = tk.Button(self.contact_frame,text=contact[0],command=lambda name=contact[0]:self.show_contact(name))
             btn.place(height=50,width=376,y=y)
             y += 50
         rem = self.show_total - len(contacts)
@@ -61,6 +64,70 @@ class Window:
             btn.place(height=50,width=376,y=y)
             y += 50
     
+    def show_contact(self,name):
+        show_win = tk.Tk()
+        show_win.title("Contact")
+        res = self.conn.get_contact(name)
+        if len(res) != 1:
+            print("Some error occured!\n\nExiting...")
+            exit(1)
+        
+        name_var = tk.StringVar(show_win)
+        category_var = tk.StringVar(show_win)
+
+        num_var_list = []
+
+        contact = res[0]
+        name = contact[0]
+        category = contact[1]
+
+        name_var.set(name)
+        category_var.set(category)
+
+        num_list = self.conn.get_numbers(name)  #list of tuples
+
+        num_var_list = [tk.IntVar(show_win) for i in range(len(num_list))]
+
+        count=0
+        for var in num_var_list:
+            var.set(num_list[count][0])
+            count+=1
+
+        tk.Label(show_win,text="Name").grid(row=0,column=0)
+        tk.Entry(show_win,textvariable=name_var).grid(row=0,column=1)
+
+        tk.Label(show_win,text="Category").grid(row=1,column=0)
+        tk.Entry(show_win,textvariable=category_var).grid(row=1,column=1)
+
+        for i in range(len(num_list)):
+            tk.Entry(show_win,textvariable=num_var_list[i]).grid(row=2+i)
+        
+        data_dict_updated = {}
+        data_dict_updated['name'] = name_var
+        data_dict_updated['category'] = category_var
+        data_dict_updated['num_var_list'] = num_var_list
+        data_dict_updated['window'] = show_win
+
+        tk.Button(show_win,text="Update",command=lambda data=data_dict_updated: self.update_contact(data)).grid(row=len(num_list) + 2 )
+
+
+        show_win.mainloop()
+
+    def update_contact(self,data_dict_updated):
+        name = data_dict_updated['name'].get()
+        category = data_dict_updated['category'].get()
+        num_list = [var.get() for var in data_dict_updated['num_var_list']]
+
+        data_dict = {}
+        data_dict['name'] = name
+        data_dict['category'] = category
+        data_dict['num_list'] = num_list
+
+        self.conn.update_contact(data_dict)
+        data_dict_updated['window'].destroy()
+
+
+
     def prev_contacts(self):
         self.page -= 1
         if self.page < 0:
@@ -70,7 +137,10 @@ class Window:
 
     def next_contacts(self):
         self.page += 1
-        self.fill_contacts()
+        res = self.fill_contacts()
+        if res==-1:
+            self.page -= 1
+
         
 
     def add_window(self):
@@ -104,8 +174,7 @@ class Window:
         else:
             self.addwin.destroy()
     
-    def update_contact(self):
-        pass
+    
     
 
 def main():
