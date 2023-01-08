@@ -1,4 +1,5 @@
 import sqlite3
+import datetime
 
 class Dbass:
     def __init__(self):
@@ -14,14 +15,50 @@ class Dbass:
     
     def create_contact_table(self):
         cursorObj = self.con.cursor()
-        cursorObj.execute("""CREATE TABLE IF NOT EXISTS contact_table(cntct_id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL, category TEXT, last_updated TIMESTAMP)""")
+        cursorObj.execute("""CREATE TABLE IF NOT EXISTS contact_table(
+        name TEXT PRIMARY KEY, category TEXT, last_updated TIMESTAMP)""")
         self.con.commit()
+        cursorObj.close()
     
     def create_number_table(self):
         cursorObj = self.con.cursor()
-        cursorObj.execute("""CREATE TABLE IF NOT EXISTS number_table(cntct_id INTEGER , number INTEGER NOT NULL, 
-        FOREIGN KEY(cntct_id) REFERENCES contact_table(cntct_id) )""")
+        cursorObj.execute("""CREATE TABLE IF NOT EXISTS number_table(cntct_id TEXT , number INTEGER NOT NULL, 
+        FOREIGN KEY(cntct_id) REFERENCES contact_table(name) )""")
+        self.con.commit()
+        cursorObj.close()
+
+
+    def add_contact(self,data_dict): #returns 0 when success else -1
+        cursorObj = self.con.cursor()
+        if self.get_contact(data_dict['name']):
+            print("Contact name already exists!")
+            return -1
+
+        sql = """INSERT INTO contact_table (name,category,last_updated) VALUES (?,?,?)"""
+        timestamp = datetime.datetime.now()
+        name = data_dict.get('name')
+        data = (name,data_dict.get('category','default'),timestamp)
+        cursorObj.execute(sql,data)
+
+        
+        sql = """INSERT INTO number_table VALUES (?,?) """
+        data = []
+        for num in data_dict['num_list']:
+            data.append((name,num))
+
+        cursorObj.executemany(sql,data)
+        
+        self.con.commit()
+        cursorObj.close()
+
+    def get_contact(self,name):
+        cursorObj = self.con.cursor()
+        sql = """SELECT * FROM contact_table where name = ?"""
+        cursorObj.execute(sql,(name,))
+        res = cursorObj.fetchall()
+        cursorObj.close()
+        return res
+
 
     def disconnect(self):
         self.con.close()
